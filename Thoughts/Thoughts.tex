@@ -58,12 +58,36 @@ The goal of the approach is to quantify \textit{beliefs} about how a variable sy
 
 \section{Math}
 
-\subsection{Bernoulli}
-Suppose we think the $x_i$ are independent Bernoulli trials. But we think the variable is not perfectly measured. Denote the true data by $t_i \iid \text{Bernoulli}(p)$. We believe that whenever $t_i=0$ then $x_i=0$, but when $t_i=1$, $x_i=1$ with probability $\pi_i$ and $x_i=0$ with probability $1-\pi_i$. So whenever the true outcome is no success the data will record this, but when the true outcome is a success it is only reported with some case-specific probability. We cannot observe the detection probability $\pi_i$ or the true data $t_i$, only $x_i$ is known. But we suspect that the detection probability is systematically influenced by some other variable $w_i$, here modeled through a logit link
+\subsection{Normal}
+Suppose we think that the $x_i$ are independent draws from a normal distribution. But we think the variable is not perfectly measured. Denote the true data by $t_i \iid N(\mu, \sigma^2)$. We believe that there is some variable $m_i$ that quantifies how much $x_i$ differs from $t_i$. In particular, we think that
 \begin{equation}
-log \left ( \frac{\pi_i}{1-\pi_i} \right ) = \alpha_0 + \alpha_1 w_i
-\end{equation}
-where $w_i$ is an observable variable, e.g. in the examples above time, regime repressiveness and distance to the nearest news correspondent. $\alpha_0$ and $\alpha_1$ are the two quantities which we have beliefs about and that need to be quantified for the analysis. This is done by specifying two prior distributions (the one on $\alpha_0$ is not strictly necessary) that represent our beliefs. Given draws from this prior distribution, we can create a distribution of $t_i$, which we can feed into the main regression and record the resulting changes in $\beta_1$ and $\gamma$. 
+m_i = \alpha_0 + \alpha_1 w_i
+\end{equation} 
+where $w_i$ is an observable variable, e.g. in the examples above time, regime repressiveness and distance to the nearest news correspondent. This leads to a model of the observed data:
+\begin{equation}
+x_i = t_i + m_i
+\end{equation} 
+\newline{}
+
+Our approach is as follows: $\alpha_0$ and $\alpha_1$ are two unknown quantities, but we have beliefs about them. They are quantified by specifying two prior distributions denoted by $p(\tilde \alpha_0)$ and $p(\tilde \alpha_1)$. Denote the draws from this distribution by $\tilde \alpha_0^{(j)}$ and  $\tilde \alpha_1^{(j)}$. This gives us a distribution of our beliefs on $m_i$:
+\begin{equation}
+\tilde m_i^{(j)} = \tilde \alpha_0^{(j)} + \tilde \alpha_1^{(j)}
+\end{equation} 
+We can therefore construct estimates of the true data from the observed data and our beliefs about $m_i$:
+\begin{equation}
+\hat t_i^{(j)} = x_i - \tilde m_i^{(j)}
+\end{equation} 
+\newline{}
+
+So instead of estimating $f(y_i)=\beta_1 x_i + \gamma^T Z_i + \varepsilon_i$, we estimate $f(y_i)=\beta_1 \hat t_i + \gamma^T Z_i + \varepsilon_i$ instead. If our beliefs about $\alpha_0$ and $\alpha_1$ are correct, the $\beta_1$ resulting from the ``belief model'' will approach the true $\beta_1$ from estimating $f(y_i)=\beta_1 t_i + \gamma^T Z_i + \varepsilon_i$.
+
+
+%\subsection{Bernoulli}
+%Suppose we think the $x_i$ are independent Bernoulli trials. But we think the variable is not perfectly measured. Denote the true data by $t_i \iid \text{Bernoulli}(p)$. We believe that whenever $t_i=0$ then $x_i=0$, but when $t_i=1$, $x_i=1$ with probability $\pi_i$ and $x_i=0$ with probability $1-\pi_i$. So whenever the true outcome is no success the data will record this, but when the true outcome is a success it is only reported with some case-specific probability. We cannot observe the detection probability $\pi_i$ or the true data $t_i$, only $x_i$ is known. But we suspect that the detection probability is systematically influenced by some other variable $w_i$, here modeled through a logit link
+%\begin{equation}
+%log \left ( \frac{\pi_i}{1-\pi_i} \right ) = \alpha_0 + \alpha_1 w_i
+%\end{equation}
+%where $w_i$ is an observable variable, e.g. in the examples above time, regime repressiveness and distance to the nearest news correspondent. $\alpha_0$ and $\alpha_1$ are the two quantities which we have beliefs about and that need to be quantified for the analysis. This is done by specifying two prior distributions (the one on $\alpha_0$ is not strictly necessary) that represent our beliefs. Given draws from this prior distribution, we can create a distribution of $t_i$, which we can feed into the main regression and record the resulting changes in $\beta_1$ and $\gamma$. 
 
 
 
