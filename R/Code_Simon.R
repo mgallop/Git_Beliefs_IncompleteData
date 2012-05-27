@@ -1,8 +1,6 @@
 ### BELIEFS DATA QUALITY
-### Experimentation with Normal
-### Simon, 05/24/12
+### Simon, 05/26/12
 
-### In this example we take the true data t1 to be normally distributed and add another normally distributed variable m1 <- a0 + a1*w1, where w1 is the variable that determines the "false reporting". The observed variable is v1=t1+m1. I then assume that we know the true a0 (with certainty) and a1 (correct mean but some uncertainty). From this a distribution of m1 (m1hat) is constructed and then the "expected" t1 is computed: t1hat=v1-m1hat. At the end we see that the coefficient b1 we care about is biased when v1 is taken at face value but not when we correct using the correct beliefs.
 
 rm(list=ls(all=TRUE))
 
@@ -11,9 +9,8 @@ library(MCMCpack)
 
 ### CREATE DATA SET
 # model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e
-# t1 is binomial and is the true values
 
-n <- 500
+n <- 1000
 
 # Design matrix X
 
@@ -43,16 +40,16 @@ colnames(data) <- c("dv","t1","v2","v3")
 data <- as.data.frame(data)
 
 
-## x1 is realization of t1: we add another normal m1
+## x1 is realization of t1: t1=x1*m1, so x1=t1/m1
 
 # model: m1 = a0 + a1 w1
-a0 <- 0
-a1 <- 1
+a0 <- 1.2
+a1 <- 0.05
 
 w1 <- rnorm(n,0,1)
 m1 <- a0 + a1*w1
 
-x1 <- data$t1 + m1
+x1 <- data$t1/m1
 data$v1 <- x1
 
 
@@ -64,23 +61,20 @@ summary(mobs)
 
 
 ### QUANTIFY BELIEFS ABOUT X1
-# pi_i = probability x1=1 if t1=1
-# model: logit(pi_1) = a0 + a1 w1
 
 # length of the vector of beliefs on a0, a1
-m <- 50
+m <- 100
 
 # here we get it right for a0 and have the right mean for a1
 	# the variance needs to be pretty low
-a0belief <- 0
-a1belief <- rnorm(m,1,0.1)
+a0belief <- 1.2
+a1belief <- rnorm(m,0.05,0.01)
 
 m1matbelief <- NULL
 for(i in 1:m){
 	m1belief <- a0belief + a1belief[i]*w1
 	m1matbelief <- cbind(m1matbelief,m1belief)
 }
-
 
 bordermat <- NULL
 for(i in 1:n){
@@ -94,15 +88,13 @@ points(sort(w1),sort(bordermat[,1]),type="l",lty=2)
 points(sort(w1),sort(bordermat[,3]),type="l",lty=2)
 
 
-
 ### CHANGING X1 ACCORDING TO BELIEFS
 
-newpost <- NULL
 
+newpost <- NULL
 for(i in 1:m){
-	relm1belief <- m1matbelief[,i]
-	v1changevec <- data$v1 - relm1belief
-	data$v1change <- v1changevec
+	m1belief <- a0belief + a1belief[i]*w1
+	data$v1change <- m1belief*data$v1
 	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)
 	newpost <- rbind(newpost,m2)
 }
