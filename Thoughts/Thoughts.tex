@@ -45,49 +45,64 @@ Simon Weschle\\
 \maketitle
 \thispagestyle{empty}
 
-
-\section{Setup}
+\section{Idea}
 \noindent
-Consider an observation $y_i$, which we model as $f(y_i)=\beta_1 x_i + \gamma^T Z_i + \varepsilon_i$ where $f(\cdot)$ is some link function, $\beta_1$ the coefficient associated with variable $x_i$ that we care about, $Z_i$ a vector of covariates we don't care about and $\gamma$ the associated vector of coefficients and $\varepsilon_i$ is a draw from some distribution with mean $0$. We suspect that $x_i$ does not correctly capture the variable it purports to measure and that there are other variables that systematically affect how well $x_i$ measures the true data. We could also suspect that $y_i$ is not measured correctly, but this is not discussed here for now. Possible examples for such data are:
+Suppose we are interested in a variable $\mathbf{t}$ with elements $t_i$, where $i=1, \dots, n$. The variable is not perfectly measured and we observe $\mathbf{x}$ instead. We suspect that there is a variable $\mathbf{w}$ that systematically influences how close the elements $x_i$ are to $t_i$. Possible examples are:
 \begin{itemize}
-\item Historical records for the number of fatalities of wars. This series becomes potentially more accurate over time as better logistics and data processing capability makes it easier to keep track of the number of fatalities.
+\item Historical records for the number of fatalities of wars. This series becomes potentially more accurate over time as better logistics and data processing capability makes it easier to keep track of the number of fatalities. So here $\mathbf{t}$ is the true number of fatalities, $\mathbf{x}$ the number of observed fatalities and $\mathbf{w}$ would be time.
 \item A cross-national survey asking respondents e.g. whether they have bribed officials, have been the victim of police brutality, or whether they have received clientelistic benefits in exchange for vote support. One suspicion is that respondents in countries with a more repressive regime are less likely to answer ``yes'' to each of those questions.
 \item The W-ICEWS data reports the monthly number of events for certain events of interest for almost all countries in the world. These events are gleaned from news stories. Since correspondents that are based in some country often also cover a number of other countries in the region, one can expect that the further countries are away from the nearest correspondent the more events will go unreported. 
 \end{itemize}
-The goal of the approach is to quantify \textit{beliefs} about how a variable systematically influences the data quality of another variable and see how this affects inference, e.g. whether results change compared to using the assumption that all variables are measured without systematic error. 
+The goal of the approach is to quantify \textit{beliefs} about how variable $\mathbf{w}$ systematically influences how the true values $\mathbf{t}$ are reported in $\mathbf{x}$. Given these subjective beliefs, the approach can then perform a sensitivity analysis and give information on how robust the results are to suspected systematic measurement error.
+
 
 \section{Math}
 
-\subsection{Normal}
-Suppose we think that the $x_i$ are independent draws from a normal distribution. But we think the variable is not perfectly measured. Denote the true data by $t_i \iid N(\mu, \sigma^2)$. We believe that there is some variable $m_i$ that quantifies how much $x_i$ differs from $t_i$. In particular, we think that
-\begin{equation}
-m_i = \alpha_0 + \alpha_1 w_i
-\end{equation} 
-where $w_i$ is an observable variable, e.g. in the examples above time, regime repressiveness and distance to the nearest news correspondent. This leads to a model of the observed data:
-\begin{equation}
-x_i = t_i + m_i
-\end{equation} 
-\newline{}
+\subsection{Continuous Variable}
 
-Our approach is as follows: $\alpha_0$ and $\alpha_1$ are two unknown quantities, but we have beliefs about them. They are quantified by specifying two prior distributions denoted by $p(\tilde \alpha_0)$ and $p(\tilde \alpha_1)$. Denote the draws from this distribution by $\tilde \alpha_0^{(j)}$ and  $\tilde \alpha_1^{(j)}$. This gives us a distribution of our beliefs on $m_i$:
+Suppose $\mathbf{t}$ (and its realization $\mathbf{x}$) is a continuous variable with support on the real line. We model the relationship between true and observed values as follows:
 \begin{equation}
-\tilde m_i^{(j)} = \tilde \alpha_0^{(j)} + \tilde \alpha_1^{(j)}
+t_i = x_i \cdot m_i
 \end{equation} 
-We can therefore construct estimates of the true data from the observed data and our beliefs about $m_i$:
+where $m_i$ is our \textit{belief} about how well $x_i$ measures $t_i$. If $m_i=1$ we believe that $x_i$ measures $t_i$ correctly, if $m_i<1$ we believe that $x_i$ is larger than $t_i$ and if $m_i>1$ we believe that $x_i$ is smaller than $t_i$. The value of $m_i$ is modeled as a polynomial function of $w_i$:
 \begin{equation}
-\hat t_i^{(j)} = x_i - \tilde m_i^{(j)}
+m_i = \alpha_0 + \sum_{j=1}^{k} \alpha_j w_i^j
 \end{equation} 
-\newline{}
+where $k$ is the order of the polynomial.
 
-So instead of estimating $f(y_i)=\beta_1 x_i + \gamma^T Z_i + \varepsilon_i$, we estimate $f(y_i)=\beta_1 \hat t_i + \gamma^T Z_i + \varepsilon_i$ instead. If our beliefs about $\alpha_0$ and $\alpha_1$ are correct, the $\beta_1$ resulting from the ``belief model'' will approach the true $\beta_1$ from estimating $f(y_i)=\beta_1 t_i + \gamma^T Z_i + \varepsilon_i$.
+\subsubsection{Example}
+In this example we estimate a regression $y_i=\beta_0 + \beta_1 x_{1i} + \beta_2 x_{2i} + \beta_3 x_{4i}$, but the measurement $\mathbf{x_1}$ of $\mathbf{t_1}$ is systematically biased. Suppose the true mechanism is $t_{1i}=x_{1i} \cdot m_i$ and $m_i=1.2 + 0.05 w_i$. Further assume our beliefs about $\mathbf{m}$ are correct but we express some uncertainty. In particular, our beliefs are $\alpha_0 \sim N(1.2, 0.05)$ and  $\alpha_0 \sim N(0.05, 0.01)$. Figure \ref{beliefplot} gives the the relation between $\mathbf{w}$ on the horizontal axis and $\mathbf{m}$ on the vertical axis. The dots are the mean beliefs and the dashed lines present the area where we are 95\% confident the true value lies within. Here the belief is that $\mathbf{t_1}$ is correctly measured at low values of $\mathbf{w}$ but $\mathbf{t_1}$ is much larger than $\mathbf{x_1}$ at high values of $\mathbf{w}$ (up to almost 50\%).
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[width=.65\textwidth]{beliefplot.pdf} 
+\caption{Description.}
+\label{beliefplot}
+\end{center}
+\end{figure}
 
 
-%\subsection{Bernoulli}
-%Suppose we think the $x_i$ are independent Bernoulli trials. But we think the variable is not perfectly measured. Denote the true data by $t_i \iid \text{Bernoulli}(p)$. We believe that whenever $t_i=0$ then $x_i=0$, but when $t_i=1$, $x_i=1$ with probability $\pi_i$ and $x_i=0$ with probability $1-\pi_i$. So whenever the true outcome is no success the data will record this, but when the true outcome is a success it is only reported with some case-specific probability. We cannot observe the detection probability $\pi_i$ or the true data $t_i$, only $x_i$ is known. But we suspect that the detection probability is systematically influenced by some other variable $w_i$, here modeled through a logit link
-%\begin{equation}
-%log \left ( \frac{\pi_i}{1-\pi_i} \right ) = \alpha_0 + \alpha_1 w_i
-%\end{equation}
-%where $w_i$ is an observable variable, e.g. in the examples above time, regime repressiveness and distance to the nearest news correspondent. $\alpha_0$ and $\alpha_1$ are the two quantities which we have beliefs about and that need to be quantified for the analysis. This is done by specifying two prior distributions (the one on $\alpha_0$ is not strictly necessary) that represent our beliefs. Given draws from this prior distribution, we can create a distribution of $t_i$, which we can feed into the main regression and record the resulting changes in $\beta_1$ and $\gamma$. 
+Figure \ref{coefplot} gives the posterior distribution of $\beta_1$, $\beta_2$ and $\beta_3$ for three different regressions. The black curves are the posteriors if we know the true values $\mathbf{t_1}$. The blue lines are what we get if we use $\mathbf{x_1}$ instead. Clearly the estimated coefficients are biased. Especially the estimated effect of the variable that is measured incorrectly on $\mathbf{y}$ is too large. The red lines give the posterior distributions after we corrected using our correct beliefs (based on 100 draws from our distribution of beliefs about $\alpha_0$ and $\alpha_1$). The posterior is relatively close to the correct posterior. 
+
+
+\begin{figure}
+\begin{center}
+\includegraphics[width=.65\textwidth]{coefplot.pdf} 
+\caption{Description.}
+\label{coefplot}
+\end{center}
+\end{figure}
+
+
+
+\subsection{Categorical Variable}
+
+Suppose $\mathbf{t}$ (and its realization $\mathbf{x}$) is a categorical variable with $s$ categories.
+
+
+\subsection{Binary Variable}
+
+Suppose $\mathbf{t}$ (and its realization $\mathbf{x}$) is a binary variable.
 
 
 
