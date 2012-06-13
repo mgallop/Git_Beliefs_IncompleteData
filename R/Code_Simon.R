@@ -96,3 +96,10 @@ m1 <- simax.regress(dv ~ 1 + change + v2 + v3, data=data, modeltype="Gaussian", 
 summary(m1)
 
 
+a1range <- seq(-0.1,0.1,0.01)
+a0range <- rep(1.2,length(a1range))
+range <- list(a0range, a1range)
+simax.sweep(dv ~ 1 + change + v2 + v3, data=data, modeltype="Gaussian", changevar=data$v1, polyorder=1, beliefsrange=range, coefinterest="change")
+
+
+

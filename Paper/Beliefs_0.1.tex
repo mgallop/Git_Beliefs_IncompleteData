@@ -1,0 +1,162 @@
+%\documentclass[fignum,letterpaper,12pt,titlepage]{article}
+\documentclass[fignum,letterpaper,12pt]{article}
+\usepackage[applemac]{inputenc}
+\usepackage{amsfonts}
+\usepackage{amsmath,amsthm,mathrsfs}
+\usepackage{fullpage,array,amsmath,graphicx,psfrag,amssymb,subfigure,tabularx,booktabs,color}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{rotating}
+\usepackage{setspace}
+\usepackage{natbib}
+\usepackage[hang,small,bf]{caption}
+\usepackage{subfigure}
+\usepackage[toc,page]{appendix}
+\usepackage{verbatim}
+\usepackage{multirow}
+%\usepackage{hyperref}
+\usepackage{rotating}
+\usepackage{changebar}
+\usepackage{pifont}
+\usepackage{marvosym}
+\usepackage{endnotes}
+\usepackage{subfigure}
+\usepackage{tikz}
+\usepackage{colortbl, color}
+\usepackage{dcolumn}
+%\let\footnote=\endnote
+%\usepackage{tikz}
+%\usetikzlibrary{fit}
+\usepackage{dcolumn}
+\clubpenalty = 10000
+\widowpenalty = 10000 
+\displaywidowpenalty = 10000
+\usepackage[paper=letterpaper,left=20mm,right=20mm,top=22mm,bottom=22mm]{geometry}
+\setlength{\parindent}{1,2cm}
+
+\newcommand{\iid}{\stackrel{\mathrm{iid}}{\sim}}
+
+\title{Impact of Systematic Measurement Error on Inference: \\ Sensitivity Analysis Using Beliefs\thanks{Version 0.1}}
+
+\author{
+Max Gallop \\
+	Duke University\\
+	\texttt{max.gallop@duke.edu}
+\and
+Simon Weschle \\
+	Duke University\\
+	\texttt{simon.weschle@duke.edu}\\ %\\ \\ \\
+	%Preliminary Draft -- Please Do Not Cite!\\
+}
+
+\date{\small{\today}}
+
+\graphicspath{{graphs/}}
+\begin{document}
+\bibliographystyle{apsr_fs}
+\maketitle
+\thispagestyle{empty}
+
+\begin{abstract}
+\noindent
+Abstract
+\end{abstract}
+\doublespacing
+\clearpage
+
+
+%%%%%%% INTRODUCTION %%%%%%%
+
+\newpage
+\setcounter{page}{1}
+\section{Introduction} \label{sec:introduction}
+
+%reasone why data would be system bad: 
+%incentives to misrepresent
+%insufficient resources to collect all data (data collection is expensive, lack of appropriate technology, relying on inappropriate proxies for some variable b/c we don't have anything better)
+%
+%works for complete but inaccurate data
+%but its also a way to do imputation MNAR: using MAR+beliefs correction
+
+%%%%%%%  THEORY %%%%%%%
+\section{Theory} \label{sec:theory}
+
+Suppose we observe a variable $\mathbf{x}$ with elements $x_i$, where $i=1, \dots, n$. It is believed that this variable has some systematic measurement error for one of the reasons described above. Denote the true but unknown values of $\mathbf{x}$ with $\mathbf{t}$. We suspect that variable $\mathbf{w}$ systematically influences how close the elements $x_i$ are to $t_i$. The relationship between $\mathbf{w}$, $\mathbf{x}$ and $\mathbf{t}$ is unknowable, but researchers can formulate beliefs about it. In this section, we present a hierarchical model approach that allows researchers to assess what their conclusions about the substantive inference they are interested in should be, give the beliefs they hold about how $\mathbf{w}$ influences $\mathbf{t}$ to produce $\mathbf{x}$. Both $\mathbf{x}$ and $\mathbf{w}$ can be continuous or non-continuous. For each of the four possible combinations a somewhat different approach is necessary. We discuss them in turn.
+
+\subsection{Both $\mathbf{x}$ and $\mathbf{w}$ Continuous} \label{subsec:case1}
+
+Suppose $x_i \in \mathbb{R}$ is an element of $\mathbf{x}$ and $t_i \in \mathbb{R}$ is an element of $\mathbf{t}$. We specify the following hierarchical model describing the relationship between $w_i$, $t_i$, and $x_i$:
+\begin{equation}
+\begin{array}{rl}
+t_i & = x_i \cdot m_i \\
+m_i & = \alpha_0 + \sum_{k=1}^{K} \alpha_k w_i^k \\
+\alpha_0 & \iid F_0\\
+& \vdots \\
+\alpha_K & \iid F_K
+\end{array}
+\end{equation}
+The term $m_i$ is a constant with which the observed value $x_i$ is multiplied to give the true value $t_i$. If $m_i=1$ then $x_i$ measures $t_i$ correctly, if $m_i<1$ then $x_i$ is larger than $t_i$ and if $m_i>1$ then $x_i$ is smaller than $t_i$. 
+
+The value of $m_i$ depends on $w_i$ and the relationship is modeled through a polynomial of order $k$ where $\alpha_0$ is the intercept and $\alpha_1$ is the first-order coefficient of $w_i$ on $m_i$ and so on. The intercept and coefficients are draws from independent and identically distributed random variables with density $F_1, \dots F_k$. It is through these distributions that the researcher quantifies her beliefs how $w_i$ influences the difference between $t_i$ and $x_i$. In the most simple case they are just constants -- but this is only appropriate if the researcher is absolutely sure about the data generating process. More appropriately, they are standard distributions such as the Normal or more complex mixture distributions. We describe prior elicitation in more detail in section \ref{sec:examples}.
+
+
+\subsection{$\mathbf{x}$ Continuous, $\mathbf{w}$ Non-Continuous} \label{subsec:case2}
+
+Now suppose $x_i$ is still continuous but $w_i$ is non-continuous (nominal or ordinal) with $L$ categories. In this case we specify the following hierarchical model describing the relationship between $w_i$, $t_i$, and $x_i$:
+\begin{equation}
+\begin{array}{rl}
+t_i & = x_i \cdot m_i \\
+m_{i} & = \sum_{l=1}^{L} \alpha_l \mathbb{I}_{w_i=l} \\
+\alpha_1 & \iid F_1\\
+& \vdots \\
+\alpha_L & \iid F_L
+\end{array}
+\end{equation}
+The term $m_i,$ is still a constant with which the observed value $x_i$ is multiplied to give the true value $t_i$. The value of $m_i$ depends on which of the $L$ categories $w_i$ is. There is an $\alpha_l$, which is an i.i.d. draw from a distribution $F_l$, for each of the $L$ categories ($\mathbb{I}$ is an indicator function that take the value of unity if the condition specified is fulfilled and zero otherwise). In essence, the researcher specifies her beliefs about how $\mathbf{w}$ influences the difference between $\mathbf{t}$ and $\mathbf{x}$ for each category separately.
+
+
+\subsection{$\mathbf{x}$ Non-Continuous, $\mathbf{w}$ Continuous} \label{subsec:case3}
+
+\subsection{Both $\mathbf{x}$ and $\mathbf{w}$ Non-Continuous} \label{subsec:case4}
+
+
+
+% need to describe at the end the final step of putting t_hat into the estimation (DV and IV)
+
+
+%%%%%%%  MONTE CARLO %%%%%%%
+\section{Monte Carlo Study} \label{sec:montecarlo}
+
+%not doing method
+%with correct beliefs
+%with increasingly wrong beliefs
+
+
+%%%%%%%  EXAMPLES %%%%%%%
+\section{Empirical Examples} \label{sec:examples}
+
+%ICEWS
+%Corruption (Jensen): imputation MAR then our belief correction=MNAR imputation
+%food deserts
+
+
+%%%%%%%  CONCLUSION %%%%%%%
+\section{Discussion} \label{sec:conclusion}
+
+
+%%%%%%% REFERENCES %%%%%%%
+
+\clearpage
+\singlespacing
+\addcontentsline{toc}{section}{References}
+\bibliography{Bib_Beliefs.bib}
+
+\end{document}
+
+
+
+
+
+
+
+
