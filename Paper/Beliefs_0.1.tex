@@ -81,15 +81,17 @@ Abstract
 %%%%%%%  THEORY %%%%%%%
 \section{Theory} \label{sec:theory}
 
-Suppose we observe a variable $\mathbf{x}$ with elements $x_i$, where $i=1, \dots, n$. It is believed that this variable has some systematic measurement error for one of the reasons described above. Denote the true but unknown values of $\mathbf{x}$ with $\mathbf{t}$. We suspect that variable $\mathbf{w}$ systematically influences how close the elements $x_i$ are to $t_i$. The relationship between $\mathbf{w}$, $\mathbf{x}$ and $\mathbf{t}$ is unknowable, but researchers can formulate beliefs about it. In this section, we present a hierarchical model approach that allows researchers to assess what their conclusions about the substantive inference they are interested in should be, give the beliefs they hold about how $\mathbf{w}$ influences $\mathbf{t}$ to produce $\mathbf{x}$. Both $\mathbf{x}$ and $\mathbf{w}$ can be continuous or non-continuous. For each of the four possible combinations a somewhat different approach is necessary. We discuss them in turn.
+Suppose we have an observed variable $\mathbf{x}$ with elements $x_i$, where $i=1, \dots, n$. It is believed that this variable has some systematic measurement error for one of the reasons described above. Denote the true but unknown values of $\mathbf{x}$ with $\mathbf{t}$. We suspect that variable $\mathbf{w}$ systematically influences how close the elements $x_i$ are to $t_i$. We call $\mathbf{w}$ the ``corrupting variable''. The relationship between $\mathbf{w}$, $\mathbf{x}$ and $\mathbf{t}$ is unknowable, but researchers can formulate beliefs about it. In this section, we present a hierarchical model approach that allows researchers to assess what their conclusions about the substantive inference they are interested in should be, give the beliefs they hold about how $\mathbf{w}$ corrupts the true values $\mathbf{t}$ to produce the observed variable $\mathbf{x}$. Both $\mathbf{x}$/$\mathbf{t}$ and $\mathbf{w}$ can be continuous or non-continuous. For each of the four possible combinations a somewhat different approach is necessary. We discuss them in turn.
 
-\subsection{Both $\mathbf{x}$ and $\mathbf{w}$ Continuous} \label{subsec:case1}
+
+%%%%%%%  Case 1 %%%%%%%
+\subsection{Both Corrupting and True/Observed Variable are Continuous} \label{subsec:case1}
 
 Suppose $x_i \in \mathbb{R}$ is an element of $\mathbf{x}$ and $t_i \in \mathbb{R}$ is an element of $\mathbf{t}$. We specify the following hierarchical model describing the relationship between $w_i$, $t_i$, and $x_i$:
 \begin{equation}
 \begin{array}{rl}
 t_i & = x_i \cdot m_i \\
-m_i & = \alpha_0 + \sum_{k=1}^{K} \alpha_k w_i^k \\
+m_i & = \alpha_0 + \sum_{j=1}^{J} \alpha_k w_i^j \\
 \alpha_0 & \iid F_0\\
 & \vdots \\
 \alpha_K & \iid F_K
@@ -97,10 +99,11 @@ m_i & = \alpha_0 + \sum_{k=1}^{K} \alpha_k w_i^k \\
 \end{equation}
 The term $m_i$ is a constant with which the observed value $x_i$ is multiplied to give the true value $t_i$. If $m_i=1$ then $x_i$ measures $t_i$ correctly, if $m_i<1$ then $x_i$ is larger than $t_i$ and if $m_i>1$ then $x_i$ is smaller than $t_i$. 
 
-The value of $m_i$ depends on $w_i$ and the relationship is modeled through a polynomial of order $k$ where $\alpha_0$ is the intercept and $\alpha_1$ is the first-order coefficient of $w_i$ on $m_i$ and so on. The intercept and coefficients are draws from independent and identically distributed random variables with density $F_1, \dots F_k$. It is through these distributions that the researcher quantifies her beliefs how $w_i$ influences the difference between $t_i$ and $x_i$. In the most simple case they are just constants -- but this is only appropriate if the researcher is absolutely sure about the data generating process. More appropriately, they are standard distributions such as the Normal or more complex mixture distributions. We describe prior elicitation in more detail in section \ref{sec:examples}.
+The value of $m_i$ depends on $w_i$ and the relationship is modeled through a polynomial of order $j$ where $\alpha_0$ is the intercept and $\alpha_1$ is the first-order coefficient of $w_i$ on $m_i$ and so on. The intercept and coefficients are draws from independent and identically distributed random variables with density $F_1, \dots F_k$. It is through these distributions that the researcher quantifies her beliefs how $w_i$ influences the difference between $t_i$ and $x_i$. In the most simple case they are just constants -- but this is only appropriate if the researcher is absolutely sure about the data generating process. More appropriately, they are standard distributions such as the Normal or more complex mixture distributions. We describe prior elicitation in more detail in section \ref{sec:examples}.
 
 
-\subsection{$\mathbf{x}$ Continuous, $\mathbf{w}$ Non-Continuous} \label{subsec:case2}
+%%%%%%%  Case 2 %%%%%%%
+\subsection{True/Observed Variable is Continuous, Corrupting Variable is Non-Continuous} \label{subsec:case2}
 
 Now suppose $x_i$ is still continuous but $w_i$ is non-continuous (nominal or ordinal) with $L$ categories. In this case we specify the following hierarchical model describing the relationship between $w_i$, $t_i$, and $x_i$:
 \begin{equation}
@@ -115,24 +118,56 @@ m_{i} & = \sum_{l=1}^{L} \alpha_l \mathbb{I}_{w_i=l} \\
 The term $m_i,$ is still a constant with which the observed value $x_i$ is multiplied to give the true value $t_i$. The value of $m_i$ depends on which of the $L$ categories $w_i$ is. There is an $\alpha_l$, which is an i.i.d. draw from a distribution $F_l$, for each of the $L$ categories ($\mathbb{I}$ is an indicator function that take the value of unity if the condition specified is fulfilled and zero otherwise). In essence, the researcher specifies her beliefs about how $\mathbf{w}$ influences the difference between $\mathbf{t}$ and $\mathbf{x}$ for each category separately.
 
 
-\subsection{$\mathbf{x}$ Non-Continuous, $\mathbf{w}$ Continuous} \label{subsec:case3}
+%%%%%%%  Case 3 %%%%%%%
+\subsection{True/Observed Variable is Non-Continuous, Corrupting Variable is Continuous} \label{subsec:case3}
+
 When dealing with how a continuous confounding variable effects a categorical response, we need to look at odds ratios. If a categorical variable can take on $k$ possible values, we are interested in the $k$ probabilities that the true value is one of those values, given the observed value. Further, we have a continuous variable, $w_1$ that impats these probabilities. To determine the effect of the confounding variable, we enumerate certain prior beliefs about the relative odds of each possible true value, and use a logit transformation to fit a curve:
 \begin{equation}
-log\frac{Pr(True Category is i|x_i,w_i)}{Pr(True Category is j|x_i,w_i)}=a_0+\Sigma a_j*w_i^j
+log\frac{Pr(\text{True Category is i}|x_i,w_i)}{Pr(\text{True Category is j}|x_i,w_i)}=a_0+\sum_{j=1}^J a_j \cdot w_i^j
 \end{equation}
 Fitting this curve will give estimated probabilities for each value of $x_i$, $w_i$, and allow us to use a multinomial distribution to correct for perceived measurement error.
-\subsection{Both $\mathbf{x}$ and $\mathbf{w}$ Non-Continuous} \label{subsec:case4}
-In the case of a categorical variable, given the observed value $x_i$, which can take on $k$ values, we are interested in the true value $t_i$, which also has $k$ values. Given $x_i=c$, we can say that
-\begin{equation}
-t_{i|} \delta p \sim Multinomial (\delta p_{jk},1)
-\end{equation}
-where $\delta$ $p$ is the simplex of $k$ probabilities ($p_11$,$p_12$...$p_1k$) that sum to unity. We can then determine the values of $\delta p_jk$ by choosing a prior
-\begin{equation}
-\delta p|\bf{alpha} \sim Dirichlet(\bf{\alpha})
-\end{equation}
-based on prior beliefs about the likelihood of observing certain values of the variable of interest given the true value. This can be done by elicitation of values for the expected values of $\delta p$, as well as the overall level of uncertainty about these beliefs. This must be done for each level of the observed value.
 
-This covers the likelihood of incorrect data conditional on the values of the observed data, but there is also a possibility that the error in the data is conditioned on a different categorical variable $w_i$. In that case, we enumerate the multinomial, dirichlet hierarchical distribution for each value of $w_i$ based on beliefs about the likelihood and direction of error at each level of the confounding(?) variable.
+
+%%%%%%%  Case 4 %%%%%%%
+\subsection{Both Corrupting and True/Observed Variable are Non-Continuous} \label{subsec:case4}
+
+In the case of a categorical variable, given the observed value $x_i$, which can take on $k$ values, we are interested in the true value $t_i$, which also has $k$ values. There is a given joint probability for each possible level of observed and true value which for a given $x_{i}=x, t_{i}=t$ we call $p_{xt}$.
+\begin{figure}
+\begin{equation*}
+\begin{matrix}
+\\
+x_{i}=1 \\
+x_{i}=2 \\
+\vdots \\
+x_{i}=k \\
+
+\end{matrix} \qquad
+\begin{bmatrix}
+t_{i}=1 & t_{i} = 2 & \hdots & t_{i} = k \\
+p_{11} & p_{12} & \ldots
+& p_{1k} \\
+p_{21} & p_{22} & \ldots
+& p_{2k} \\
+\vdots & \vdots & \ddots
+& \vdots \\
+p_{k1} & p_{k2} & \ldots
+& p_{kk}
+\end{bmatrix}
+\end{equation*}
+\caption{Probabilities for each level of observed value ($x_{i}$)and true value ($t_{i}$)}
+\end{figure}
+
+Once we observe $x_{i}=x$, and given the vector of probabilities $(p_{x1}, p_{x2}...p_{xk}) \equiv \Delta (p_{x})$ we can estimate $t_{i}$ using the following hierarchical model:
+\begin{equation}
+t_{i}| \Delta (p_{x}) \sim Multinomial (\Delta (p_{x}),1)
+\end{equation}
+\begin{equation}
+\Delta p_{x}|w_{i},\alpha \sim Dirichlet(\bf{\alpha})
+\end{equation}
+
+We determine the values of $\Delta (p_{x})$ by choosing a prior where $\bf{\alpha}$ is a vector of $k$ values $(a_{0}, a_{1} \hdots a_{k-1})$ based on prior beliefs about the likelihood of observing certain values of the variable of interest given the true value. This can be done by elicitation of values for the expected values of $\Delta (p_{x})$, as well as the overall level of uncertainty about these beliefs. This must be done for each level of the observed value.
+
+This covers the likelihood of incorrect data conditional on the values of the observed data, but there is also a possibility that the error in the data is conditioned on a different categorical variable $w_i$. In that case, we enumerate the multinomial, dirichlet hierarchical distribution for each value of $w_i$ based on beliefs about the likelihood and direction of error at each level of the corrupting variable.
 
 % need to describe at the end the final step of putting t_hat into the estimation (DV and IV)
 

@@ -28,11 +28,11 @@ corr13 <- -0.3
 corr23 <- 0
 
 # length of the vector of beliefs on a0, a1
-m <- 100
+m <- 15
 
 # beliefs
-a0belief <- rnorm(m,1,0.05)
-a1belief <- rnorm(m,0.05,0.01)
+a0belief <- rnorm(m,1,0.01)
+a1belief <- rnorm(m,0.05,0.05)
 
 
 
@@ -74,7 +74,7 @@ data <- as.data.frame(data)
 a0 <- 1
 a1 <- 0.05
 
-w1 <- rnorm(n,5,1)
+w1 <- rnorm(n,3,1)
 m1 <- a0 + a1*w1
 data$x1measured <- data$x1/m1
 
@@ -90,7 +90,7 @@ beliefs <- list(a0belief, a1belief)
 
 m1matbelief <- NULL
 for(i in 1:m){
-	m1belief <- a0belief + a1belief[i]*w1
+	m1belief <- a0belief[i] + a1belief[i]*w1
 	m1matbelief <- cbind(m1matbelief,m1belief)
 }
 
@@ -124,9 +124,9 @@ for(i in 1:dim(beliefsdata)[2]){
 posterior.mcmc <- as.mcmc(posterior)
 posterior.data <- as.data.frame(posterior)
 
-summary(posterior.mcmc)
+#summary(posterior.mcmc)
 
-posterior.reduce <- posterior[seq(1,dim(posterior)[1],100),]
+posterior.reduce <- posterior[seq(1,dim(posterior)[1],dim(posterior)[1]/10000),]
 
 
 quartz("",5,8)
