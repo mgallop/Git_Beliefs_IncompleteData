@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009) (format=pdflatex 2009.11.7)  14 JUN 2012 16:28
+This is pdfTeX, Version 3.1415926-1.40.10 (TeX Live 2009) (format=pdflatex 2009.11.7)  15 JUN 2012 07:56
 entering extended mode
  \write18 enabled.
  file:line:error style messages enabled.
@@ -695,20 +695,27 @@ File: ursfs.fd 1998/03/24 rsfs font definition file (jk)
 ) [1
 Non-PDF special ignored!
 
-{/usr/local/texlive/2009/texmf-var/fonts/map/pdftex/updmap/pdftex.map}] [1
+{/usr/local/texlive/2009/texmf-var/fonts/map/pdftex/updmap/pdftex.map}]
 
-] [2] [3]
+LaTeX Warning: Reference `sec:examples' on page 1 undefined on input line 100.
+
+[1
+
+] [2] [3] [4]
 No file Beliefs_0.1.bbl.
 (./Beliefs_0.1.aux)
+
+LaTeX Warning: There were undefined references.
+
 
 LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
 
  ) 
 Here is how much of TeX's memory you used:
- 11084 strings out of 493848
- 184433 string characters out of 3149207
- 245731 words of memory out of 3000000
- 14076 multiletter control sequences out of 15000+200000
+ 11082 strings out of 493848
+ 184401 string characters out of 3149207
+ 245730 words of memory out of 3000000
+ 14074 multiletter control sequences out of 15000+200000
  18320 words of font info for 73 fonts, out of 3000000 for 9000
  714 hyphenation exceptions out of 8191
  47i,9n,49p,1005b,229s stack positions out of 5000i,500n,10000p,200000b,50000s
@@ -727,9 +734,9 @@ ive/2009/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texliv
 e/2009/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/
 2009/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb></usr/local/texlive/2
 009/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on Beliefs_0.1.pdf (4 pages, 156882 bytes).
+Output written on Beliefs_0.1.pdf (5 pages, 160893 bytes).
 PDF statistics:
- 78 PDF objects out of 1000 (max. 8388607)
+ 81 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
  13 words of extra memory for PDF output out of 10000 (max. 10000000)
 
