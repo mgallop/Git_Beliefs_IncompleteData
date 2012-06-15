@@ -3,13 +3,13 @@ simax.regress <- function(formula, data, modeltype, changevar, polyorder, belief
 	# change the data according to the beliefs
 	beliefsdata <- matrix(NA,nrow=dim(data)[1],ncol=length(beliefslist[[1]]))
 	if(polyorder==1){
-		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + changevar*beliefslist[[2]][i])}
+		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + w1*beliefslist[[2]][i])}
 	}
 	if(polyorder==2){
-		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + changevar*beliefslist[[2]][i] + changevar^2*beliefslist[[3]][i])}
+		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + w1*beliefslist[[2]][i] + changevar^2*beliefslist[[3]][i])}
 	}
 	if(polyorder==3){
-		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + changevar*beliefslist[[2]][i] + changevar^2*beliefslist[[3]][i] + changevar^3*beliefslist[[4]][i])}
+		for(i in 1:length(beliefslist[[1]])){beliefsdata[,i] <- changevar*(beliefslist[[1]][i] + w1*beliefslist[[2]][i] + changevar^2*beliefslist[[3]][i] + changevar^3*beliefslist[[4]][i])}
 	}
 	
 	# run the model
@@ -17,7 +17,7 @@ simax.regress <- function(formula, data, modeltype, changevar, polyorder, belief
 		posterior <- NULL
 		for(i in 1:dim(beliefsdata)[2]){
 			data$change <- beliefsdata[,i]
-			model <- MCMCregress(dv ~ 1 + change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)
+			model <- MCMCregress(dv ~ 1 + change + x2 + x3, data=data, burnin=1000, mcmc=5000, thin=50)
 			posterior <- rbind(posterior,model)
 		}
 	}
