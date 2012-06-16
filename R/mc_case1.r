@@ -22,23 +22,40 @@ setwd("C:/Users/sww7.WIN/Documents/Beliefs")
 # 1. number of observations
 nvec <- c(100,500,1000)
 
-# 2. corr12
-corr12vec <- seq(-1,1,0.2)
+# 2. Correlation Structure
 
-# 3. corr13
-corr13vec <- seq(-1,1,0.2)
-
-# 4. corr23
-corr23vec <- seq(-1,1,0.2)
+corr12vec <- c(0,0.25,0.5,0.75,-0.25,0.25,0.5,0.75)
+corr13vec <- c(0,0.25,0.5,0.75,-0.25,0,0,0)
+corr23vec <- c(0,0.25,0.5,0.75,-0.25,0,0,0)
 
 # 5. beliefs distribution size
-mvec <- c(10,25,50,100,250)
+mvec <- c(10,25,100)
 
 # 6. mean of a1 distribution
-a1meanvec <- seq(0,1,0.01)
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)
 
 # 7. var of a1 distribution
-a1varvec <- seq(0,0.05,0.01)
+a1varvec <- c(0,0.01,0.02,0.03)
+
+
+### FINDING POS DEF CORRELATIONS
+
+Sigmalist <- list()
+t <- 1
+for(l2 in 1: length(corr12vec)){
+	
+corr12 <- corr12vec[l2]
+corr13 <- corr13vec[l2]
+corr23 <- corr23vec[l2]	
+
+mu <- c(0,0,0)
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)
+te <- is.positive.definite(mat)
+if (te=="FALSE") Sigmalist[[t]] <- NA
+if (te=="TRUE") Sigmalist[[t]] <- mat
+t <- t+1
+}
+
 
 
 ### THE LOOP
@@ -46,26 +63,16 @@ a1varvec <- seq(0,0.05,0.01)
 outmat <- NULL
 
 for(l1 in 1: length(nvec)){
-for(l2 in 1: length(corr12vec)){
-for(l3 in 1: length(corr13vec)){
-for(l4 in 1: length(corr23vec)){
 for(l5 in 1: length(mvec)){
 for(l6 in 1: length(a1meanvec)){
 for(l7 in 1: length(a1varvec)){
+for(l8 in 1: length(Sigmalist)){
+	
 
 ### THE DRAWS
 
 # 1. number of observations
 n <- nvec[l1]
-
-# 2. corr12
-corr12 <- corr12vec[l2]
-
-# 3. corr13
-corr13 <- corr13vec[l3]
-
-# 4. corr23
-corr23 <- corr23vec[l4]
 
 # 5. beliefs distribution size
 m <- mvec[l5]
@@ -75,6 +82,9 @@ a1mean <- a1meanvec[l6]
 
 # 7. var of a1 distribution
 a1var <- a1varvec[l7]
+
+# 8. Covariance Structure
+Sigma <- Sigmalist[[l8]]
 
 # beliefs
 a0belief <- rnorm(m,1,0.01)
@@ -88,8 +98,6 @@ a1belief <- rnorm(m,a1mean,a1var)
 # Design matrix X
 
 mu <- c(0,0,0)
-corrs <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)
-Sigma <- nearPD(corrs,cor=T)$mat
 
 X <- mvrnorm(n, mu, Sigma)
 cuts <- quantile(X[,3],c(1/3,2/3))
@@ -159,9 +167,9 @@ for(i in 1:dim(beliefsdata)[2]){
 
 posterior.reduce <- posterior[seq(1,dim(posterior)[1],dim(posterior)[1]/10000),]
 
-div1 <- c(mean(KL.divergence(mtrue[,2], mobs[,2], k=5),na.rm=T), mean(KL.divergence(mtrue[,2], posterior.reduce[,2], k=5),na.rm=T))
-div2 <- c(mean(KL.divergence(mtrue[,3], mobs[,3], k=5),na.rm=T), mean(KL.divergence(mtrue[,3], posterior.reduce[,3], k=5),na.rm=T))
-div3 <- c(mean(KL.divergence(mtrue[,4], mobs[,4], k=5),na.rm=T), mean(KL.divergence(mtrue[,4], posterior.reduce[,4], k=5),na.rm=T))
+div1 <- c(mean(KL.divergence(mtrue[,2], mobs[,2], k=3),na.rm=T), mean(KL.divergence(mtrue[,2], posterior.reduce[,2], k=3),na.rm=T))
+div2 <- c(mean(KL.divergence(mtrue[,3], mobs[,3], k=3),na.rm=T), mean(KL.divergence(mtrue[,3], posterior.reduce[,3], k=3),na.rm=T))
+div3 <- c(mean(KL.divergence(mtrue[,4], mobs[,4], k=3),na.rm=T), mean(KL.divergence(mtrue[,4], posterior.reduce[,4], k=3),na.rm=T))
 
 out <- c(n, Sigma[1,2], Sigma[1,3], Sigma[2,3], m, a1mean, a1var, div1[1], div1[2], div2[1], div2[2], div3[1], div3[2])
 outmat <- rbind(outmat,out)

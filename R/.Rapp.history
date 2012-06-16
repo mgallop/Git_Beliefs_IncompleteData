@@ -1,966 +1,3 @@
-plot(postbelief,data$v1)
-table(data$t1,v1change)
-table(data$v1,v1change)
-.5*.3
-### BELIEFS DATA QUALITY#
-### Some experimentation#
-### Simon, 05/19/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X1old <- X[,1]#
-makebin <- ifelse(X[,1]>quantile(X[,1],0.4),1,0)#
-X[,1] <- makebin#
-X <- cbind(rnorm(n,1,1),X)#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: x1=0 if t1=0, if t1=1 then x1=1 w/ prob pi_i#
-#
-# model: logit(pi_1) = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- X1old + rnorm(n,0,0)#
-pihelp <- a0 + a1*w1#
-pi <- exp(pihelp)/(1+exp(pihelp))#
-#
-#
-replace <- rbinom(n,1,pi)#
-x1 <- ifelse(data$t1==1,replace,0)#
-data$v1 <- x1#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)
-#
-### QUANTIFY BELIEFS ABOUT X1#
-# pi_i = probability x1=1 if t1=1#
-# model: logit(pi_1) = a0 + a1 w1#
-#
-# length of the vector of beliefs on a0, a1#
-m <- 1#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0)#
-#
-pimatbelief <- NULL#
-for(i in 1:m){#
-	pihelpbelief <- a0belief + a1belief[i]*w1#
-	pibelief <- exp(pihelpbelief)/(1+exp(pihelpbelief))#
-	pimatbelief <- cbind(pimatbelief,pibelief)#
-}
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relpibelief <- pimatbelief[,i]#
-	# P(t=1 | x=0)#
-	gamma <- mean(data$v1)/mean(relpibelief)#
-	postbelief <- ((1-relpibelief)*gamma)/(1-relpibelief*gamma)#
-	replace <- rbinom(n,1,postbelief)#
-	v1change <- ifelse(data$v1==1,1,replace)#
-	#v1change <- ifelse(data$v1==1,1,postbelief)#
-	data$v1change <- v1change#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}
-gamma
-mean(data$t1)
-mean(data$v1)
-#
-newpost <- as.data.frame(newpost)#
-mean(newpost$v1change)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relpibelief <- pimatbelief[,i]#
-	# P(t=1 | x=0)#
-	#gamma <- mean(data$v1)/mean(relpibelief)#
-	gamma <- 0.6#
-	postbelief <- ((1-relpibelief)*gamma)/(1-relpibelief*gamma)#
-	replace <- rbinom(n,1,postbelief)#
-	v1change <- ifelse(data$v1==1,1,replace)#
-	#v1change <- ifelse(data$v1==1,1,postbelief)#
-	data$v1change <- v1change#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}#
-#
-newpost <- as.data.frame(newpost)#
-mean(newpost$v1change)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- t1 + m1#
-#
-#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)
-head(X)
-### BELIEFS DATA QUALITY#
-### Some experimentation#
-### Simon, 05/19/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X1old <- X[,1]#
-makebin <- ifelse(X[,1]>quantile(X[,1],0.4),1,0)#
-X[,1] <- makebin
-head(X)
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- t1 + m1#
-#
-#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- data$t1 + m1#
-data$v1 <- x1
-cor(data$t1,data$v1)
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)
-# length of the vector of beliefs on a0, a1#
-m <- 1#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0)#
-#
-pimatbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	pimatbelief <- cbind(pimatbelief,pibelief)#
-}
-a0belief <- 0#
-a1belief <- rnorm(m,1,0)#
-#
-m1matbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	m1matbelief <- cbind(m1matbelief,m1belief)#
-}
-cor(m1belief,m1)
-i<-1
-newpost <- NULL
-	relm1belief <- m1matbelief[,i]
-relm1belief
-	v1change <- data$v1 - m1
-cor(v1change,data$v1)
-cor(v1change,data$t1)
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- data$t1 + m1#
-data$v1 <- x1#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)#
-#
-#
-### QUANTIFY BELIEFS ABOUT X1#
-# pi_i = probability x1=1 if t1=1#
-# model: logit(pi_1) = a0 + a1 w1#
-#
-# length of the vector of beliefs on a0, a1#
-m <- 1#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0)#
-#
-m1matbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	m1matbelief <- cbind(m1matbelief,m1belief)#
-}#
-#
-#
-### CHANGING X1 ACCORDING TO BELIEFS#
-#
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relm1belief <- m1matbelief[,i]#
-	v1change <- data$v1 - m1#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}#
-#
-newpost <- as.data.frame(newpost)#
-mean(newpost$v1change)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-m <- 100
-a1belief <- rnorm(m,1,0.5)
-plot(density(a1belief))
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- data$t1 + m1#
-data$v1 <- x1#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)#
-#
-#
-### QUANTIFY BELIEFS ABOUT X1#
-# pi_i = probability x1=1 if t1=1#
-# model: logit(pi_1) = a0 + a1 w1#
-#
-# length of the vector of beliefs on a0, a1#
-m <- 100#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0.5)#
-#
-m1matbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	m1matbelief <- cbind(m1matbelief,m1belief)#
-}#
-#
-#
-### CHANGING X1 ACCORDING TO BELIEFS#
-#
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relm1belief <- m1matbelief[,i]#
-	v1change <- data$v1 - m1#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}#
-#
-newpost <- as.data.frame(newpost)#
-mean(newpost$v1change)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-head(newpost)
-summary(mobs)
-colnames(newpost)
-colnames(newpost)[1]
-output <- matrix(c("", "Mean", "SD", colnames(newpost)[1], mean(newpost[,1]), sqrt(var(newpost[,1])), colnames(newpost)[2], mean(newpost[,2]), sqrt(var(newpost[,2])), colnames(newpost)[3], mean(newpost[,3]), sqrt(var(newpost[,3])), colnames(newpost)[4], mean(newpost[,4]), sqrt(var(newpost[,4]))),ncol=3)
-output
-output <- matrix(c("", "Mean", "SD", colnames(newpost)[1], mean(newpost[,1]), sqrt(var(newpost[,1])), colnames(newpost)[2], mean(newpost[,2]), sqrt(var(newpost[,2])), colnames(newpost)[3], mean(newpost[,3]), sqrt(var(newpost[,3])), colnames(newpost)[4], mean(newpost[,4]), sqrt(var(newpost[,4]))),ncol=3,byrow=T)
-output
-summary(mtrue)
-plot(density(mtrue[,2]),xlim=c(0,3))
-lines(density(mobs[,2]),type="l",col="blue")
-lines(density(newpost$v1change),type="l",col="red")
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- data$t1 + m1#
-data$v1 <- x1#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)#
-#
-#
-### QUANTIFY BELIEFS ABOUT X1#
-# pi_i = probability x1=1 if t1=1#
-# model: logit(pi_1) = a0 + a1 w1#
-#
-# length of the vector of beliefs on a0, a1#
-m <- 100#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0.5)#
-#
-m1matbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	m1matbelief <- cbind(m1matbelief,m1belief)#
-}#
-#
-#
-### CHANGING X1 ACCORDING TO BELIEFS#
-#
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relm1belief <- m1matbelief[,i]#
-	v1change <- data$v1 - m1#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}#
-#
-newpost <- as.data.frame(newpost)#
-#
-# regression output#
-output <- matrix(c("", "Mean", "SD", colnames(newpost)[1], mean(newpost[,1]), sqrt(var(newpost[,1])), colnames(newpost)[2], mean(newpost[,2]), sqrt(var(newpost[,2])), colnames(newpost)[3], mean(newpost[,3]), sqrt(var(newpost[,3])), colnames(newpost)[4], mean(newpost[,4]), sqrt(var(newpost[,4]))),ncol=3,byrow=T)#
-output#
-#
-#
-plot(density(mtrue[,2]),xlim=c(0,4))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,4))
-lines(density(mobs[,2]),type="l",col="blue")
-lines(density(newpost$v1change),type="l",col="red")
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,5))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-#
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,10))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9))#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")
-plot(density(mtrue[,2]),xlim=c(0,3),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(w1,m1belief)
-plot(w1,m1matbelief)
-### BELIEFS DATA QUALITY#
-### Experimentation with Normal#
-### Simon, 05/24/12#
-#
-### In this example we take the true data t1 to be normally distributed and add another normally distributed variable m1 <- a0 + a1*w1, where w1 is the variable that determines the "false reporting". The observed variable is v1=t1+m1. I then assume that we know the true a0 (with certainty) and a1 (correct mean but some uncertainty). From this a distribution of m1 (m1hat) is constructed and then the "expected" t1 is computed: t1hat=v1-m1hat. At the end we see that the coefficient b1 we care about is biased when v1 is taken at face value but not when we correct using the correct beliefs.#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)#
-#
-#
-## x1 is realization of t1: we add another normal m1#
-#
-# model: m1 = a0 + a1 w1#
-a0 <- 0#
-a1 <- 1#
-#
-w1 <- rnorm(n,0,1)#
-m1 <- a0 + a1*w1#
-#
-x1 <- data$t1 + m1#
-data$v1 <- x1#
-#
-#
-mtrue <- MCMCregress(dv ~ 1 + t1 + v2 + v3, data=data)#
-summary(mtrue)#
-#
-mobs <- MCMCregress(dv ~ 1 + x1 + v2 + v3, data=data)#
-summary(mobs)#
-#
-#
-### QUANTIFY BELIEFS ABOUT X1#
-# pi_i = probability x1=1 if t1=1#
-# model: logit(pi_1) = a0 + a1 w1#
-#
-# length of the vector of beliefs on a0, a1#
-m <- 100#
-#
-# here we get it right for a0 and have the right mean for a1#
-a0belief <- 0#
-a1belief <- rnorm(m,1,0.5)#
-#
-m1matbelief <- NULL#
-for(i in 1:m){#
-	m1belief <- a0belief + a1belief[i]*w1#
-	m1matbelief <- cbind(m1matbelief,m1belief)#
-}#
-#
-#
-### CHANGING X1 ACCORDING TO BELIEFS#
-#
-newpost <- NULL#
-#
-for(i in 1:m){#
-	relm1belief <- m1matbelief[,i]#
-	v1change <- data$v1 - m1#
-	m2 <- MCMCregress(dv ~ 1 + v1change + v2 + v3, data=data, burnin=1000, mcmc=5000, thin=50)#
-	newpost <- rbind(newpost,m2)#
-}#
-#
-newpost <- as.data.frame(newpost)#
-#
-# regression output#
-output <- matrix(c("", "Mean", "SD", colnames(newpost)[1], mean(newpost[,1]), sqrt(var(newpost[,1])), colnames(newpost)[2], mean(newpost[,2]), sqrt(var(newpost[,2])), colnames(newpost)[3], mean(newpost[,3]), sqrt(var(newpost[,3])), colnames(newpost)[4], mean(newpost[,4]), sqrt(var(newpost[,4]))),ncol=3,byrow=T)#
-output#
-#
-#
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-quartz("",15,5)#
-layout(cbind(1,2,3))#
-layout.show(3)
-head(newpost)
-plot(density(mtrue[,3]),xlim=c(0,3),ylim=c(0,9),main="Posterior of V2")#
-lines(density(mobs[,3]),type="l",col="blue")#
-lines(density(newpost$v2),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,4]),xlim=c(0,3),ylim=c(0,9),main="Posterior of V3")#
-lines(density(mobs[,4]),type="l",col="blue")#
-lines(density(newpost$v3),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,4]),xlim=c(-1,2),ylim=c(0,7),main="Posterior of V3")#
-lines(density(mobs[,4]),type="l",col="blue")#
-lines(density(newpost$v3),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,3]),xlim=c(0,3),ylim=c(0,8),main="Posterior of V2")#
-lines(density(mobs[,3]),type="l",col="blue")#
-lines(density(newpost$v2),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,3]),xlim=c(0,2),ylim=c(0,8),main="Posterior of V2")#
-lines(density(mobs[,3]),type="l",col="blue")#
-lines(density(newpost$v2),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-plot(density(mtrue[,4]),xlim=c(-1,2),ylim=c(0,7),main="Posterior of V3")#
-lines(density(mobs[,4]),type="l",col="blue")#
-lines(density(newpost$v3),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-quartz("",5,15)#
-layout(rbind(1,2,3))#
-layout.show(3)
-# plotting and comparing 3 coefficients#
-quartz("",5,8)#
-layout(rbind(1,2,3))#
-layout.show(3)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))#
-#
-plot(density(mtrue[,3]),xlim=c(0,2),ylim=c(0,8),main="Posterior of V2")#
-lines(density(mobs[,3]),type="l",col="blue")#
-lines(density(newpost$v2),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))#
-#
-plot(density(mtrue[,4]),xlim=c(-1,2),ylim=c(0,7),main="Posterior of V3")#
-lines(density(mobs[,4]),type="l",col="blue")#
-lines(density(newpost$v3),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-# plotting and comparing 3 coefficients#
-quartz("",5,8)#
-layout(rbind(1,2,3))#
-layout.show(3)#
-#
-plot(density(mtrue[,2]),xlim=c(0,3),ylim=c(0,9),main="Posterior of Coefficient of Interest")#
-lines(density(mobs[,2]),type="l",col="blue")#
-lines(density(newpost$v1change),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))#
-#
-plot(density(mtrue[,3]),xlim=c(0,2),ylim=c(0,8),main="Posterior of V2")#
-lines(density(mobs[,3]),type="l",col="blue")#
-lines(density(newpost$v2),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))#
-#
-plot(density(mtrue[,4]),xlim=c(-1,3),ylim=c(0,7),main="Posterior of V3")#
-lines(density(mobs[,4]),type="l",col="blue")#
-lines(density(newpost$v3),type="l",col="red")#
-legend("topright",c("True","Observed","Correct Belief"),col=c("black","blue","red"),lty=c(1,1,1))
-### BELIEFS DATA QUALITY#
-### Poisson#
-### Simon, 05/25/12#
-#
-### In this example we take the true data t1 to be a Poisson count and subtract another count (here Poisson, can also be binomial, geometric, neg binomial) variable m1 <- a0 + a1*w1, where w1 is the variable that determines the "false reporting". The observed variable count is v1=t1-m1 (can also be t1+m1 if we expect that the reported counts are larger than the real one's). I then assume that we know the true a0 (with certainty) and a1 (correct mean but some uncertainty). From this a distribution of m1 (m1hat) is constructed and then the "expected" t1 is computed: t1hat=v1+m1hat. At the end we see that the coefficient b1 we care about is biased when v1 is taken at face value but not when we correct using the correct beliefs.#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)#
-#
-#
-# Dependent Variable Y#
-#
-# the regression coefficients#
-b1 <- 2#
-b2 <- 0.4#
-b3 <- -0.2#
-#
-Y <- X[,1] + b1*X[,2] + b2*X[,3] + b3*X[,4] + rnorm(n,0,1)#
-#
-data <- cbind(Y,X[,2],X[,3],X[,4])#
-colnames(data) <- c("dv","t1","v2","v3")#
-data <- as.data.frame(data)
-plot(density(data$t1))
-### BELIEFS DATA QUALITY#
-### Poisson#
-### Simon, 05/25/12#
-#
-### In this example we take the true data t1 to be a Poisson count and subtract another count (here Poisson, can also be binomial, geometric, neg binomial) variable m1 <- a0 + a1*w1, where w1 is the variable that determines the "false reporting". The observed variable count is v1=t1-m1 (can also be t1+m1 if we expect that the reported counts are larger than the real one's). I then assume that we know the true a0 (with certainty) and a1 (correct mean but some uncertainty). From this a distribution of m1 (m1hat) is constructed and then the "expected" t1 is computed: t1hat=v1+m1hat. At the end we see that the coefficient b1 we care about is biased when v1 is taken at face value but not when we correct using the correct beliefs.#
-#
-rm(list=ls(all=TRUE))#
-#
-library(MASS)#
-library(MCMCpack)#
-#
-### CREATE DATA SET#
-# model: y= b0 + b1 t1 + b2 x2 + b3 x3 + e#
-# t1 is binomial and is the true values#
-#
-n <- 1000#
-#
-# Design matrix X#
-#
-#correlations between the variables#
-corr12 <- 0.3#
-corr13 <- 0.8#
-corr23 <- -0.2#
-#
-mu <- c(1,-4,3)#
-Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
-#
-X <- mvrnorm(n, mu, Sigma)#
-X <- cbind(rnorm(n,1,1),X)
 head(X)
 ### BELIEFS DATA QUALITY#
 ### Poisson#
@@ -6737,3 +5774,1019 @@ outmat <- rbind(outmat,out)#
 #
 }}}}}}}
 outmat
+corr12vec <- seq(-0.8,0.8,0.4)
+lenght(corr12vec)
+length(corr12vec)
+3*5*5*5*3*5*4
+# 2. corr12#
+corr12vec <- seq(-0.8,0.8,0.4)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.8,0.8,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.8,0.8,0.4)
+l1<-l2<-l3<-1
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]
+corrs <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)
+l4<-1
+corr23 <- corr23vec[l4]
+corrs <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)
+Sigma<-corrs
+X <- mvrnorm(n, mu, Sigma)
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)
+X <- mvrnorm(n, mu, Sigma)
+mu <- c(0,0,0)
+X <- mvrnorm(n, mu, Sigma)
+Sigma <- nearPD(corrs,cor=T)$mat
+Sigma
+corrs
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+Sigma <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+#
+X <- mvrnorm(n, mu, Sigma)#
+}}}
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+bla <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+bla[[t]] <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+#
+t<- t+1#
+}}}
+bla
+library(matrixcalc)
+t
+t<-1
+te <- is.positive.definite(bla[[t]])
+te
+test[[t]] <- ifelse(te=="FALSE",0,1)
+ifelse(te=="FALSE",0,1)
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+bla <- test <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+bla[[t]] <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(bla[[t]])#
+test[[t]] <- ifelse(te=="FALSE",0,1)#
+}}}
+test
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+bla <- test <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+bla[[t]] <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(bla[[t]])#
+test[[t]] <- ifelse(te=="FALSE",0,1)#
+t <- t+1#
+}}}
+test
+bla[[test[[t]]==1]]
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+final <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+final[[t]] <- ifelse(te=="FALSE",mat,NA)#
+#
+t <- t+1#
+}}}
+final
+mat
+te
+ifelse(te=="FALSE",mat,NA)
+te
+mat
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.4)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.4)#
+#
+final <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+#
+# 3. corr13#
+corr13 <- corr13vec[l3]#
+#
+# 4. corr23#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") final[[t]] <- NA#
+if (te=="TRUE") final[[t]] <- mat#
+#
+t <- t+1#
+}}}
+final
+unique(final)
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. corr12#
+corr12vec <- seq(-1,1,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-1,1,0.2)#
+#
+# 4. corr23#
+corr23vec <- seq(-1,1,0.2)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- seq(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- seq(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}
+Sigma
+Sigma <- unique(Sigma)
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. corr12#
+corr12vec <- seq(-0.8,0.8,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.8,0.8,0.2)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.8,0.8,0.2)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- seq(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- seq(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}	#
+#
+#
+Sigma <- unique(Sigma)
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. corr12#
+corr12vec <- seq(-0.8,0.8,0.2)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.8,0.8,0.2)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.8,0.8,0.2)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}	#
+#
+#
+Sigma <- unique(Sigma)
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. corr12#
+corr12vec <- seq(-0.75,0.75,0.25)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.75,0.75,0.25)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.75,0.75,0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}	#
+#
+#
+Sigma <- unique(Sigma)
+Sigma
+Sigma[[-1]]
+Sigma[[1]]<-NULL
+Sigma
+dim(Sigma)
+length(Sigma)
+263*3*3*5*4
+rm(list=ls(all=TRUE))
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75)#
+corr23vec <- c(0,0.25,0.5,0.75)#
+#
+#
+# 2. corr12#
+corr12vec <- seq(-0.75,0.75,0.25)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.75,0.75,0.25)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.75,0.75,0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}	#
+#
+#
+Sigma <- unique(Sigma)#
+Sigma[[1]] <- NULL
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75)#
+corr23vec <- c(0,0.25,0.5,0.75)#
+#
+#
+# 2. corr12#
+corr12vec <- seq(-0.75,0.75,0.25)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.75,0.75,0.25)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.75,0.75,0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+for(l3 in 1: length(corr13vec)){#
+for(l4 in 1: length(corr23vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l3]#
+corr23 <- corr23vec[l4]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75)#
+corr23vec <- c(0,0.25,0.5,0.75)#
+#
+#
+# 2. corr12#
+corr12vec <- seq(-0.75,0.75,0.25)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.75,0.75,0.25)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.75,0.75,0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}}}
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75)#
+corr23vec <- c(0,0.25,0.5,0.75)#
+#
+#
+# 2. corr12#
+corr12vec <- seq(-0.75,0.75,0.25)#
+#
+# 3. corr13#
+corr13vec <- seq(-0.75,0.75,0.25)#
+#
+# 4. corr23#
+corr23vec <- seq(-0.75,0.75,0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75)#
+corr23vec <- c(0,0.25,0.5,0.75)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75,-0.25,-0.5,-0.75)#
+corr13vec <- c(0,0.25,0.5,0.75,-0.25,-0.5,-0.75)#
+corr23vec <- c(0,0.25,0.5,0.75,-0.25,-0.5,-0.75)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75,-0.25)#
+corr13vec <- c(0,0.25,0.5,0.75,-0.25)#
+corr23vec <- c(0,0.25,0.5,0.75,-0.25)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}
+Sigma
+#
+#####################################
+###      SENSITIVITY BELIEFS     ####
+###		  MC CASE 1          ####
+###          06/15/2012          ####
+#####################################
+#
+#
+rm(list=ls(all=TRUE))#
+#
+library(MASS)#
+library(MCMCpack)#
+library(FNN)#
+library(Matrix)#
+#
+#
+setwd("C:/Users/sww7.WIN/Documents/Beliefs")#
+#
+#
+### THINGS THAT CAN CHANGE#
+#
+# 1. number of observations#
+nvec <- c(100,500,1000)#
+#
+# 2. Correlation Structure#
+#
+corr12vec <- c(0,0.25,0.5,0.75,-0.25,0.25,0.5,0.75)#
+corr13vec <- c(0,0.25,0.5,0.75,-0.25,0,0,0)#
+corr23vec <- c(0,0.25,0.5,0.75,-0.25,0,0,0)#
+#
+# 5. beliefs distribution size#
+mvec <- c(10,25,100)#
+#
+# 6. mean of a1 distribution#
+a1meanvec <- c(0,0.025,0.05,0.075,0.1)#
+#
+# 7. var of a1 distribution#
+a1varvec <- c(0,0.01,0.02,0.03)#
+#
+#
+### FINDING POS DEF CORRELATIONS#
+#
+Sigma <- list()#
+t <- 1#
+for(l2 in 1: length(corr12vec)){#
+	#
+corr12 <- corr12vec[l2]#
+corr13 <- corr13vec[l2]#
+corr23 <- corr23vec[l2]	#
+#
+mu <- c(0,0,0)#
+mat <- matrix(c(1,corr12,corr13,corr12,1,corr23,corr13,corr23,1),3,3)#
+te <- is.positive.definite(mat)#
+if (te=="FALSE") Sigma[[t]] <- NA#
+if (te=="TRUE") Sigma[[t]] <- mat#
+t <- t+1#
+}#
+#
+Sigma
