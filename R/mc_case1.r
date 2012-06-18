@@ -12,9 +12,10 @@ library(MASS)
 library(MCMCpack)
 library(FNN)
 library(Matrix)
+library(matrixcalc)
 
-
-setwd("C:/Users/sww7.WIN/Documents/Beliefs")
+setwd("/Users/simonweschle/Political_Science/Research/Beliefs_Incomplete Data/Git_Beliefs_IncompleteData/R")
+#setwd("C:/Users/sww7.WIN/Documents/Beliefs")
 
 
 ### THINGS THAT CAN CHANGE
@@ -174,9 +175,9 @@ div3 <- c(mean(KL.divergence(mtrue[,4], mobs[,4], k=3),na.rm=T), mean(KL.diverge
 out <- c(n, Sigma[1,2], Sigma[1,3], Sigma[2,3], m, a1mean, a1var, div1[1], div1[2], div2[1], div2[2], div3[1], div3[2])
 outmat <- rbind(outmat,out)
 
-}}}}}}}
+}}}}}
 
-colnames(outmat) <- c("n","corr12","corr13","corr23","m","a1mean","a1var","KL.x1.obs","KL.x1.bel","KL.x2.obs","KL.x2.bel","KL.x2.obs","KL.x2.bel")
+colnames(outmat) <- c("n","corr12","corr13","corr23","m","a1mean","a1var","KL.x1.obs","KL.x1.bel","KL.x2.obs","KL.x2.bel","KL.x3.obs","KL.x3.bel")
 
 save(outmat, file="MC_Case1.rda")	
 
