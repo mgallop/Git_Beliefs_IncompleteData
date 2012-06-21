@@ -117,18 +117,7 @@ m_{i} & = \sum_{l=1}^{L} \alpha_l \mathbb{I}_{w_i=l} \\
 \end{equation}
 The term $m_i,$ is still a constant with which the observed value $x_i$ is multiplied to give the true value $t_i$. The value of $m_i$ depends on which of the $L$ categories $w_i$ is. There is an $\alpha_l$, which is an i.i.d. draw from a distribution $F_l$, for each of the $L$ categories ($\mathbb{I}$ is an indicator function that take the value of unity if the condition specified is fulfilled and zero otherwise). In essence, the researcher specifies her beliefs about how $\mathbf{w}$ influences the difference between $\mathbf{t}$ and $\mathbf{x}$ for each category separately.
 
-
 %%%%%%%  Case 3 %%%%%%%
-\subsection{True/Observed Variable is Non-Continuous, Corrupting Variable is Continuous} \label{subsec:case3}
-
-When dealing with how a continuous confounding variable effects a categorical response, we need to look at odds ratios. If a categorical variable can take on $k$ possible values, we are interested in the $k$ probabilities that the true value is one of those values, given the observed value. Further, we have a continuous variable, $w_1$ that impats these probabilities. To determine the effect of the confounding variable, we enumerate certain prior beliefs about the relative odds of each possible true value, and use a logit transformation to fit a curve:
-\begin{equation}
-log\frac{Pr(\text{True Category is i}|x_i,w_i)}{Pr(\text{True Category is j}|x_i,w_i)}=a_0+\sum_{j=1}^J a_j \cdot w_i^j
-\end{equation}
-Fitting this curve will give estimated probabilities for each value of $x_i$, $w_i$, and allow us to use a multinomial distribution to correct for perceived measurement error.
-
-
-%%%%%%%  Case 4 %%%%%%%
 \subsection{Both Corrupting and True/Observed Variable are Non-Continuous} \label{subsec:case4}
 
 In the case of a categorical variable, given the observed value $x_i$, which can take on $k$ values, we are interested in the true value $t_i$, which also has $k$ values. There is a given joint probability for each possible level of observed and true value which for a given $x_{i}=x, t_{i}=t$ we call $p_{xt}$.
@@ -165,22 +154,59 @@ t_{i}| \Delta (p_{x}) \sim Multinomial (\Delta (p_{x}),1)
 \Delta p_{x}|w_{i},\alpha \sim Dirichlet(\bf{\alpha})
 \end{equation}
 
-We determine the values of $\Delta (p_{x})$ by choosing a prior where $\bf{\alpha}$ is a vector of $k$ values $(a_{0}, a_{1} \hdots a_{k-1})$ based on prior beliefs about the likelihood of observing certain values of the variable of interest given the true value. This can be done by elicitation of values for the expected values of $\Delta (p_{x})$, as well as the overall level of uncertainty about these beliefs. This must be done for each level of the observed value.
+We determine the values of $\Delta (p_{x})$ by choosing a prior where $\bf{\alpha}$ is a vector of $k$ values $(a_{1}, a_{2} \hdots a_{k})$ based on prior beliefs about the likelihood of observing certain values of the variable of interest given the true value. This can be done by elicitation of values for the expected values of $\Delta (p_{x})$, as well as the overall level of uncertainty about these beliefs. This must be done for each level of the observed value.
+
+We do this by establishing a set of $k+1$ equations such that
+\begin{equation}
+\begin{array}{rl}
+E[p_{x1}] = \frac{\alpha_{1}}{\sum_{i=1}^{k} \alpha_{i}} \\
+E[p_{x2}] = \frac{\alpha_{2}}{\sum_{i=1}^{k} \alpha_{i}} \\
+\vdots \\
+E[p_{xk}] = \frac{\alpha_{k}}{\sum_{i=1}^{k} \alpha_{i}} \\
+Var[p_{x1}] = \frac{\alpha_{1}(\sum_{i=1}^{k} \alpha_{i}-\alpha_{1})}{(\sum_{i=1}^{k} \alpha_{i})^{2}((\sum_{i=1}^{k} \alpha_{i}-1)} 
+\end{array}
+\end{equation}
 
 This covers the likelihood of incorrect data conditional on the values of the observed data, but there is also a possibility that the error in the data is conditioned on a different categorical variable $w_i$. In that case, we enumerate the multinomial, dirichlet hierarchical distribution for each value of $w_i$ based on beliefs about the likelihood and direction of error at each level of the corrupting variable.
 
 % need to describe at the end the final step of putting t_hat into the estimation (DV and IV)
 
 
-%%%%%%%  SIMULATION %%%%%%%
+%%%%%%%  Case 4 %%%%%%%
+\subsection{True/Observed Variable is Non-Continuous, Corrupting Variable is Continuous} \label{subsec:case3}
+As might be expected, when the observed variable is categorical, and the corrupting variable is continuous the procedure to account for our beliefs about data is a combination of those in case 1 and case 3.
+
+Again we are interested in a probability vector that gives us the transition probabilities that the true value $t_{i} = t|x_{i} = x$, and that this is a function of $w_i$, so, if $x_{i}$ and $t_{i}$can take on one of $k$ possible values, then we are interested in a vector of $k$ probabilities $(p_{1xw}, p_{2xw}..p_{kxw}) \equiv \Delta (p_{xw}$ where each probability is a function of the observed values of $x_{i}$ and $w_{i}$. 
+
+To determine the relationship between $w_{i}$ and $\Delta (p_{xw})$, we use a sampling of beliefs about the different probabilities, then use a log odds ratio to induce linearity so that we can fit the curve. This is done using the ratio of the probability that the true value is some value $t$ given the observed value $x_{i} = x$ to the probability that the true value and the observed value are the same. 
+
+Using prior beliefs about this ratio at various levels of $w_{i}$ we then fit the following curves for each level of $x_{i}$
+
+%Can't get Math formatting to work
+%\begin{equation}
+%\begin{array}
+%log\frac{Pr(\text{True Category is 1}|x_i,w_i)}{Pr(\text{True Category is $x_{i}}|x_i,w_i$)}=a_10+\sum_{j=1}^J a_{1j}  w_i^j \\
+%log\frac{Pr(\text{True Category is 2}|x_i,w_i)}{Pr(\text{True Category is $x_{i}}|x_i,w_i$)}=a_20+\sum_{j=1}^J a_{2j}  w_i^j \\
+%\vdots \\
+%log\frac{Pr(\text{True Category is $(k-1)}|x_i,w_i$)}{Pr(\text{True Category is $x_{i}$}$|x_i,w_i)$}=a_{(k-1)0}+\sum_{j=1}^J %a_{(k-1)j}  w_i^j
+%\end{array}
+%\end{equation}
+
+Once we have done this, we can then retrieve the values of $\Delta (p_{xw})$ through the formula
+\begin{equation}
+\hat{p_{ixw}} = \frac{exp(\hat{a_i0}+\sum_{j=1}^J \hat{a_ij} \cdot w_i^j)}{1+\sum_{h=1}^{k-1}exp(\hat{a_{h0}}+\sum_{j=1}^J \hat{a_{hj}}w_{i}^{j})}
+\end{equation}
+
+Once we have $\Delta (\hat{p})$, we can sample $t_{i}$ from a Multinomail(1,$\Delta (\hat{p}$) and then use our values of $\hat{t_{i}}$ in estimation.
+
+
+
+%%%%%%%  MONTE CARLO %%%%%%%
 \section{Simulation Study} \label{sec:simulation}
 
-In this section we evaluate the performance of the belief-based sensitivity analysis using Monte Carlo studies. The data generating process for the $n$ observations is:
-\begin{equation}
-y_i = \beta_1 x_{1i }+ \beta_2 x_{2i} + \beta_3 x_{3i} + \varepsilon_i
-\end{equation}
-where $\varepsilon_i \iid N(0,1)$. The first two independent variables are continuous and the third one has three categories (we assume for now that they are ordered). They are drawn from a multivariate normal distribution with varying covariance structure $\Sigma$. The non-continuous variable is generated by dividing the draws from the multivariate Normal into terciles. We set $\beta_1=\beta_2=\beta_3=1$.
-
+%not doing method
+%with correct beliefs
+%with increasingly wrong beliefs
 
 
 %%%%%%%  EXAMPLES %%%%%%%
